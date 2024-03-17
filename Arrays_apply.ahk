@@ -1,2 +1,2 @@
 #include "Arrays.ahk"
-Arrays.addMethodsToArrayObjects()
+Arrays.addMethodsToArrayPrototype()

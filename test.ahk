@@ -21,9 +21,8 @@ Esc::ExitApp
 ^Enter::Reload
 #HotIf
 
-;#include "Arrays.ahk"
-;Arrays.addMethodsToArrayObjects()
 #include "Arrays_apply.ahk"
+#include "Arrays_todo.ahk"
 
 All_Tests := []
 
