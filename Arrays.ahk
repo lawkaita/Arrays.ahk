@@ -209,7 +209,7 @@ class Arrays {
     for i, x in l {
       if not IsSet(x)
         continue
-      y := Arrays._variadic_call(fn, thisArg ?? unset, x, i, l)
+      y := Arrays._variadic_call(fn, thisArg?, x, i, l)
       if (y is Array)
         _l.push(y*)
       else
@@ -293,7 +293,7 @@ class Arrays {
     _l := []
     for i, x in l {
       if IsSet(x) {
-        _l.push(Arrays._variadic_call(fn, thisArg ?? unset, x, i, l))
+        _l.push(Arrays._variadic_call(fn, thisArg?, x, i, l))
       } else {
         _l.length := _l.length + 1
       }
@@ -304,7 +304,7 @@ class Arrays {
   static forEach(l, fn, thisArg?) {
     for i, x in l {
       if IsSet(x) {
-        Arrays._variadic_call(fn, thisArg ?? unset, x, i, l)
+        Arrays._variadic_call(fn, thisArg?, x, i, l)
       }
     }
     return ""
@@ -313,7 +313,7 @@ class Arrays {
   static every(l, fn, thisArg?) {
     for i, x in l {
       if IsSet(x) {
-	if not Arrays._variadic_call(fn, thisArg ?? unset, x, i, l) {
+	if not Arrays._variadic_call(fn, thisArg?, x, i, l) {
 	  return false
 	}
       }
@@ -324,7 +324,7 @@ class Arrays {
   static some(l, fn, thisArg?) {
     for i, x in l {
       if IsSet(x) {
-	if Arrays._variadic_call(fn, thisArg ?? unset, x, i, l) {
+	if Arrays._variadic_call(fn, thisArg?, x, i, l) {
 	  return true
 	}
       }
@@ -411,7 +411,7 @@ class Arrays {
     fn_enum := Arrays._mk_array_enumerator(l, ascending, 2)
 
     for i, x in fn_enum {
-      if Arrays._variadic_call(fn, thisArg ?? unset, x ?? unset, i, l) {
+      if Arrays._variadic_call(fn, thisArg?, x?, i, l) {
         return x ?? ""
       }
     }
@@ -432,11 +432,11 @@ class Arrays {
   }
 
   static find(l, fn, default_?, thisArg?) {
-    return Arrays._find(l, fn, true, default_ ?? unset, thisArg ?? unset)
+    return Arrays._find(l, fn, true, default_?, thisArg?)
   }
 
   static findLast(l, fn, default_?, thisArg?) {
-    return Arrays._find(l, fn, false, default_ ?? unset, thisArg ?? unset)
+    return Arrays._find(l, fn, false, default_?, thisArg?)
   }
 
   /*
@@ -444,7 +444,7 @@ class Arrays {
   */
   static findIndex(l, fn, thisArg?) {
     for i, x in l {
-      if Arrays._variadic_call(fn, thisArg ?? unset, x ?? unset, i, l) {
+      if Arrays._variadic_call(fn, thisArg?, x?, i, l) {
         return i
       }
     }
@@ -457,7 +457,7 @@ class Arrays {
   static findLastIndex(l, fn, thisArg?) {
     fn_enum := Arrays._mk_array_enumerator(l, false, 2)
     for i, x in fn_enum {
-      if Arrays._variadic_call(fn, thisArg ?? unset, x ?? unset, i, l) {
+      if Arrays._variadic_call(fn, thisArg?, x?, i, l) {
         return i
       }
     }
@@ -491,7 +491,7 @@ class Arrays {
     _l := []
     for i, x in l {
       if IsSet(x) {
-	if (Arrays._variadic_call(fn, thisArg ?? unset, x, i, l)) {
+	if (Arrays._variadic_call(fn, thisArg?, x, i, l)) {
 	  _l.push(x)
 	}
       }
@@ -563,17 +563,17 @@ class Arrays {
   }
 
   static reduce(l, fn, initial?) {
-    return Arrays._reduce(l, fn, true, initial ?? unset)
+    return Arrays._reduce(l, fn, true, initial?)
   }
 
   static reduceRight(l, fn, initial?) {
-    return Arrays._reduce(l, fn, false, initial ?? unset)
+    return Arrays._reduce(l, fn, false, initial?)
   }
 
   static join(l, sep:=',') {
     str := ""
     for i, x in l {
-      str .= Arrays._item_to_string(l, x ?? unset) . (i < l.length ? sep : '')
+      str .= Arrays._item_to_string(l, x?) . (i < l.length ? sep : '')
     }
     return str
   }
@@ -639,7 +639,7 @@ class Arrays {
 
   static toSpliced(l, a?, delcount?, items*) {
     _l := l.clone()
-    return Arrays.splice(_l, a ?? unset, delcount ?? unset, items*)
+    return Arrays.splice(_l, a?, delcount?, items*)
   }
 
   static ofLength(len) {
@@ -710,7 +710,7 @@ class Arrays {
   static toString(l) {
     _l := []
     for x in l {
-      _l.push(Arrays._item_to_string(l, x ?? unset))
+      _l.push(Arrays._item_to_string(l, x?))
     }
     return Arrays.join(_l)
   }
@@ -766,14 +766,14 @@ class Arrays {
     returns 0 instead of -1 if nothing is found.
   */
   static indexOf(l,x?,a:=1) {
-    return Arrays._indexOf(l, x ?? unset, a, true)
+    return Arrays._indexOf(l, x?, a, true)
   }
 
   /*
     returns 0 instead of -1 if nothing is found.
   */
   static lastIndexOf(l,x?,a:=l.length) {
-    return Arrays._indexOf(l, x ?? unset, a, false)
+    return Arrays._indexOf(l, x?, a, false)
   }
 
   static prettyPrint(l) {
@@ -844,7 +844,7 @@ class Arrays {
 
   static toSorted(l, compareFn?, algorithm?) {
     _l := l.clone()
-    return Arrays.sort(_l, compareFn ?? unset, algorithm ?? unset)
+    return Arrays.sort(_l, compareFn?, algorithm?)
   }
 
   static fromEnumerator(e, ref_indices := [1]) {
