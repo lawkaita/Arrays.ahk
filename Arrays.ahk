@@ -145,6 +145,8 @@ class Arrays {
     return str
   }
 
+  ; Arrays.slice first attempt thoughts:
+  ;
   ; ahk arrays are 1-based, so
   ; shift every value in the range tests by +1
   ; compared to the js range logic.
@@ -168,32 +170,65 @@ class Arrays {
   ;
   ; also allow b = 0 in first range test,
   ; meaning last index
+
+  /*
+    - ahk arrays are 1-based.
+    - ahk arrays allow negative indexing:
+        - a[-1] is the last element of a.
+        - a[-a.length] is the first element.
+
+    therefore, to stay consistent with ahk
+    indexing,  -1 should not mean the second
+    last index, and 0 should not mean the last
+    index.
+
+    in js array.slice(a,b),
+      - a is inclusive,
+      - b is exclusive.
+
+    since ahk is 1-based, the b in 
+    Arrays.slice(l,a,b) should also
+    be inclusive.
+
+    a = 0 is considered an error?
+    b = 0 is not?
+
+    if b is fixed
+      if a approaches 0 from above
+	 a = 0 makes sense as a = 1
+           return all up to b
+      if a approaches 0 from below
+	 a = 0 makes sense as a = l.length + 1
+           return nothing
+
+    if a is fixed
+      if b approaches 0 from above
+         b = 0 makes sense as b < a
+           return nothing
+      if b approaches 0 from below
+         b = 0 makes sense as b = l.length
+           return all starting form a
+   
+
+  */
   static slice(l, a:=1, b?) {
     _l := []
 
-    /*
-      Any value of a less than 1 refers to
-      positions beginning from the end of
-      l. So, a = 0 means last, a = -1
-      means second last, etc.
+    if (a == 0)
+      return _l
 
-      The smallest value of a that
-      meaningfully refers to a position in
-      the l is -l.length+1, which refers to
-      the first position. Any value of a
-      less than this is taken to also mean
-      the first position.
-
-      The largest meaningful value of a
-      is l.length. If a = l.length + 1,
-      the range of [a,b] is outside of the
-      indices of l.
-    */
-    if (-l.length + 1 <= a and a < 1)
-      a := a + l.length
-    else if (a < -l.length + 1)
+    if (-l.length <= a and a < 0)
+      /*
+        - a is in  [-l.length, -1]
+        - map a to [1,   l.length]
+        this is the same transformation
+        that ahk itself does with
+        negative indexes.
+      */
+      a := a + l.length + 1
+    else if (a < -l.length)
       a := 1
-    else if (a >= l.length + 1)
+    else if (a > l.length)
       return _l
 
     /*
@@ -201,8 +236,10 @@ class Arrays {
     */
     if not (isSet(b))
       b := l.length
-    else if (-l.length <= b and b <= 0)
-      b := b + l.length
+    else if (b == 0)
+      return _l
+    else if (-l.length <= b and b < 0)
+      b := b + l.length + 1
     else if (b < -l.length)
       b := 0
     else if (b > l.length)
