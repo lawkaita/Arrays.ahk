@@ -33,5 +33,14 @@ class ForEach_Tests {
     fb := fn.bind(arr, fn_ThrowError)
     YUnit.assert(ThrowsError(['Error', 'An Error'], fb))
   }
+  Test_ThisArg() {
+    a := [['a', 1], ['b', 2], ['c', 3], ['d', 4]]
+    obj := {}
+    a.forEach((this, x) => (this.%x[1]% := x[2]), obj)
+    YUnit.assert(obj.a == 1)
+    YUnit.assert(obj.b == 2)
+    YUnit.assert(obj.c == 3)
+    YUnit.assert(obj.d == 4)
+  }
 }
 All_Tests.push(ForEach_Tests)

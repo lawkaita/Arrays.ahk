@@ -1,3 +1,26 @@
+/* 
+  Ahk does not have undefined or null, only two falsy constants,
+  the empty string and zero.
+
+  Opinion: the empty string is "more undefined" than zero, since
+  StrLen("") == 0 but StrLen(0) == 1, and a function returns the
+  the empty string if it finishes executing without explicitly
+  returning anything, or if its execution reaches a return 
+  statement which has no arguments.
+
+  Therefore, Arrays methods will return the empty string when
+  out of any other options.
+
+  ---
+
+  ThisArg: in ahk, the written definition of a method signature
+  method(args...) is syntax sugar for a function method(this, args...),
+  where this is just a variable name. When an object calls a method
+  attached to it, it is placed as the first parameter in the call.
+
+  TODO
+  l.push(x) => if l.has(i) then l.push(x) else l.length = l.length + 1
+*/
 class Arrays {
 
   static throwExceptions := false
@@ -15,11 +38,16 @@ class Arrays {
     to try to call it all the parameters, dropping one from the end
     until fn accepts the parameter list.
   */
-  static _variadic_call(fn, l*) {
+  static _variadic_call(fn, thisArg?, l*) {
     /*
       this function only ever should receive calls from Arrays methods
       so it should never be called with more than 4 arguments in l*.
     */
+
+    if IsSet(thisArg) {
+      l.insertAt(1, thisArg)
+    }
+
     if (type(fn) == 'BoundFunc') {
       /*
         UUGLY HACK
@@ -48,12 +76,14 @@ class Arrays {
       }
       return res
     }
+
     switch fn.maxparams {
       case 0: return fn()
       case 1: return fn(l[1])
       case 2: return fn(l[1], l[2])
       case 3: return fn(l[1], l[2], l[3])
       case 4: return fn(l[1], l[2], l[3], l[4])
+      case 5: return fn(l[1], l[2], l[3], l[4], l[5])
     }
   }
 
@@ -103,7 +133,7 @@ class Arrays {
       if the intersection P & R is empty, the function
       returns 0.
   */
-  static _positive_index_of(l, a, a_is_lower := true) {
+  static _normalize_starting_bound(l, a, a_is_lower := true) {
     if (a == 0) {
       return 0
     } else if (1 <= a and a <= l.length) {
@@ -121,11 +151,23 @@ class Arrays {
       if (a > l.length)     ;  P & R = {}
         return 0	    ;
       return 1		    ;  (a < -l.length) => P & R = P
-    } else {		    ;  a_is_upper => R = ]-infty, a]
+    } else {		    ;  R = ]-infty, a]
       if (a > l.length)     ;  P & R = P
         return l.length     
       return 0              ;  (a < -l.length) => P & R = {}
     }
+  }
+
+  static _normalize_count(l, a, count) {
+    count_all_to_end := l.length - a + 1
+
+    if (count < 0)
+      count := count_all_to_end + count
+
+    if (a - 1 + count > l.length)
+      count := count_all_to_end
+
+    return count
   }
 
   static concat(l, ls*) {
@@ -143,23 +185,67 @@ class Arrays {
     return _l
   }
 
-  static flat(l, d) {
+  static flat(l, d := 1) {
     _l := l.clone()
     if (d <= 0)
       return _l
 
     i := 1
-    end := _l.length
-    while (i <= end) {
+    b := _l.length
+    while (i <= b) {
       x := _l[i]
       if (x is Array) {
         _l.removeAt(i)  ;  x
         x := Arrays.flat(x, d-1)
         _l.insertAt(i, x*)
+        i := i + x.length
       }
       i++
     }
     return _l
+  }
+
+  static flatMap(l, fn, thisArg?) {
+    _l := []
+    for i, x in l {
+      y := Arrays._variadic_call(fn, thisArg ?? unset, x, i, l)
+      if (y is Array)
+        _l.push(y*)
+      else
+        _l.push(y)
+    }
+    return _l
+  }
+
+  static copyWithin(l, target, a, count := l.length) {
+    target := Arrays._normalize_starting_bound(l, target, true)
+    if not target
+      return l
+
+    a := Arrays._normalize_starting_bound(l, a, true)
+    if not a
+      return l
+
+    if (target == a)
+      return l
+
+    count := Arrays._normalize_count(l, a, count)
+    if (target < a) {
+
+      i := 0
+      while (i < count)
+        l[target+i] := l[a+i], i++
+
+    } else {  ;  target > a
+      if (target - 1 + count > l.length)
+        count := Arrays._normalize_count(l, target, count)
+
+      i := count - 1
+      while (i >= 0)
+        l[target+i] := l[a+i], i--
+    }
+
+    return l
   }
 
   static equals(l1, l2) {
@@ -184,41 +270,76 @@ class Arrays {
     return true
   }
 
-  static map(l, fn) {
+  static map(l, fn, thisArg?) {
     _l := []
     for i, x in l {
-      _l.push(Arrays._variadic_call(fn, x, i, l))
+      _l.push(Arrays._variadic_call(fn, thisArg ?? unset, x, i, l))
     }
     return _l
   }
 
-  static forEach(l, fn) {
+  static forEach(l, fn, thisArg?) {
     for i, x in l {
-      Arrays._variadic_call(fn, x, i, l)
+      Arrays._variadic_call(fn, thisArg ?? unset, x, i, l)
     }
   }
 
-  static every(l, fn) {
+  static every(l, fn, thisArg?) {
     for i, x in l {
-      if not Arrays._variadic_call(fn, x, i, l) {
+      if not Arrays._variadic_call(fn, thisArg ?? unset, x, i, l) {
         return false
       }
     }
     return true
   }
 
-  static some(l, fn) {
+  static some(l, fn, thisArg?) {
     for i, x in l {
-      if Arrays._variadic_call(fn, x, i, l) {
+      if Arrays._variadic_call(fn, thisArg ?? unset, x, i, l) {
         return true
       }
     }
     return false
   }
 
-  static find(l, fn, default_?) {
-    for i, x in l {
-      if Arrays._variadic_call(fn, x, i, l) {
+  static _mk_array_enumerator(l, ascending, arg_count) {
+    if (ascending) {
+      return l.__Enum(arg_count)
+    }
+
+    a := l.length
+
+    fn_elementEnumerator(&x) {
+      if (a <= 0)
+        return false
+      x := l[a]
+      a--
+      return true
+    }
+
+    fn_indexElementEnumerator(&i, &x) {
+      if (a <= 0)
+        return false
+      i := a
+      x := l[a]
+      a--
+      return true
+    }
+
+    if (arg_count == 1) {
+      return fn_elementEnumerator
+    } else if (arg_count == 2) {
+      return fn_indexElementEnumerator
+    }
+
+    return ""
+  }
+
+  static _find(l, fn, ascending, default_?, thisArg?) {
+    fn_enum := Arrays._mk_array_enumerator(l, ascending, 2)
+
+    for i, x in fn_enum {
+      if Arrays._variadic_call(fn, thisArg ?? unset, x, i, l) {
         return x
       }
     }
@@ -235,15 +356,36 @@ class Arrays {
     if Arrays.throwExceptions
       Throw UnsetItemError("Nothing found.", -1)
 
+    return ""
+  }
+
+  static find(l, fn, default_?, thisArg?) {
+    return Arrays._find(l, fn, true, default_ ?? unset, thisArg ?? unset)
+  }
+
+  static findLast(l, fn, default_?, thisArg?) {
+    return Arrays._find(l, fn, false, default_ ?? unset, thisArg ?? unset)
+  }
+
+  /*
+    returns 0 instead of -1 if nothing is found.
+  */
+  static findIndex(l, fn, thisArg?) {
+    for i, x in l {
+      if Arrays._variadic_call(fn, thisArg ?? unset, x, i, l) {
+        return i
+      }
+    }
     return 0
   }
 
   /*
     returns 0 instead of -1 if nothing is found.
   */
-  static findIndex(l, fn) {
-    for i, x in l {
-      if Arrays._variadic_call(fn, x, i, l) {
+  static findLastIndex(l, fn, thisArg?) {
+    fn_enum := Arrays._mk_array_enumerator(l, false, 2)
+    for i, x in fn_enum {
+      if Arrays._variadic_call(fn, thisArg ?? unset, x, i, l) {
         return i
       }
     }
@@ -251,7 +393,7 @@ class Arrays {
   }
 
   static includes(l, x, a:=1) {
-    a := Arrays._positive_index_of(l,a,true)
+    a := Arrays._normalize_starting_bound(l,a,true)
     if (not a)
       return false
 
@@ -264,17 +406,17 @@ class Arrays {
     return false
   }
 
-  static filter(l, fn) {
+  static filter(l, fn, thisArg?) {
     _l := []
     for i, x in l {
-      if (Arrays._variadic_call(fn, x, i ,l)) {
+      if (Arrays._variadic_call(fn, thisArg ?? unset, x, i, l)) {
         _l.push(x)
       }
     }
     return _l
   }
 
-  static reduce(l, fn, initial?) {
+  static _reduce(l, fn, left, initial?) {
     if (l.length == 0) {
       if isSet(initial)
 	return initial
@@ -286,24 +428,47 @@ class Arrays {
 	return Arrays.default
 
       if Arrays.throwExceptions
-	Throw TypeError("Empty array reduced to nothing.", -1)
+	Throw TypeError("Empty array reduced to nothing.", -2)
 
-      return 0  ;; ahk none/false/null
+      return ""
     }
 
-    if isSet(initial) {
-      x := initial
-      i := 1
-    } else {
-      x := l[1]
-      i := 2
-    }
+    if (left) {
+      if isSet(initial) {
+	x := initial
+	i := 1
+      } else {
+	x := l[1]
+	i := 2
+      }
 
-    while (i <= l.length) {
-      x := Arrays._variadic_call(fn, x, l[i], i, l)
-      i++
+      while (i <= l.length) {
+	x := Arrays._variadic_call(fn, unset, x, l[i], i, l)
+	i++
+      }
+    } else {  ;  reduceRight
+      if isSet(initial) {
+	x := initial
+	i := l.length
+      } else {
+	x := l[-1]
+	i := l.length - 1
+      }
+
+      while (i > 0) {
+	x := Arrays._variadic_call(fn, unset, x, l[i], i, l)
+	i--
+      }
     }
     return x
+  }
+
+  static reduce(l, fn, initial?) {
+    return Arrays._reduce(l, fn, true, initial ?? unset)
+  }
+
+  static reduceRight(l, fn, initial?) {
+    return Arrays._reduce(l, fn, false, initial ?? unset)
   }
 
   static join(l, sep:=',') {
@@ -324,17 +489,15 @@ class Arrays {
     if (l.length == 0)
       return _l
 
-    a := Arrays._positive_index_of(l,a,true)
+    a := Arrays._normalize_starting_bound(l,a,true)
     if (not a)
       return _l
 
+    count := Arrays._normalize_count(l, a, count)
     if (count == 0)
       return _l
-    else if (count > 0)
-      b := Min(a - 1 + count, l.length)
-    else  ;  count < 0
-      b := Max(l.length + count, 0)
 
+    b := a - 1 + count
     while (a <= b)
       _l.push(l[a]), a++
 
@@ -382,18 +545,16 @@ class Arrays {
   }
 
   static fill(l, x, a := 1, count := l.length) {
-    a := Arrays._positive_index_of(l,a,true)
+    a := Arrays._normalize_starting_bound(l,a,true)
     if (not a)
       return l
 
-    ; TODO: standardize count/b getting
-    ; TODO: create custom iterators that take a sub range and can reverse?
-    if (a - 1 + count > l.length)
-      count := l.length - a + 1
+    count := Arrays._normalize_count(l, a, count)
 
-    i := 1
-    while (i <= count)
-      l[a-1+i] := x, i++
+    i := a
+    b := a - 1 + count
+    while (i <= b)
+      l[i] := x, i++
 
     return l
   }
@@ -444,14 +605,14 @@ class Arrays {
     if (ascending) {
       a_is_lower_endpoint := true
       step := 1
-      range_test := (i) => (i < l.length)
+      range_test := (i) => (i <= l.length)
     } else {
       a_is_lower_endpoint := false
       step := -1
       range_test := (i) => (i > 0)
     }
 
-    a := Arrays._positive_index_of(l, a, a_is_lower_endpoint)
+    a := Arrays._normalize_starting_bound(l, a, a_is_lower_endpoint)
     if (not a)
       return 0
 
@@ -527,7 +688,6 @@ class Arrays {
   static toSorted(l, compareFn?, algorithm?) {
     _l := l.clone()
     return Arrays.sort(_l, compareFn ?? unset, algorithm ?? unset)
-
   }
 
   static fromEnumerator(e, ref_indices := [1]) {
@@ -573,9 +733,9 @@ class Arrays {
         ref_indices.push(i)
         i++
       }
-    } else if ref_indices is Array
+    } else if ref_indices is Array {
       max_i := max(ref_indices*)
-    else {
+    } else {
       Throw TypeError(Format("Expected an Integer or an Array but got a{} {}."
           , ( _n(type(ref_indices)) ? "n" : "" )
           , type(ref_indices)

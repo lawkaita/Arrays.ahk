@@ -9,7 +9,7 @@ class Reduce_Tests {
   Test_Empty_Array_No_Initial() {
     ; in js this throws TypeError
     res := [].reduce((acc,cur) => (acc+cur))
-    YUnit.assert(res == 0)
+    YUnit.assert(res == "")
   }
   Test_Empty_Array_With_Initial() {
     fn_acc := this.fn_acc
@@ -37,13 +37,16 @@ class Reduce_Tests {
     fn_acc := this.fn_acc
     calls := 0
     fb := fn_acc.bind(&calls)
+
     YUnit.assert([1,2,3,4].reduce(fb) == 10)
+    YUnit.assert(calls == 3)
   }
   Test_Summign_With_Initial() {
     fn_acc := this.fn_acc
     calls := 0
     fb := fn_acc.bind(&calls)
     YUnit.assert([1,2,3,4].reduce(fb, 1) == 11)
+    YUnit.assert(calls == 4)
   }
   Test_All_Truthy() {
     both := (x, y) => (x and y)
@@ -59,6 +62,10 @@ class Reduce_Tests {
     res := values.reduce((x,y) => max(x,y))
     YUnit.assert(res == 4)
   }
-
+  Test_Concat() {
+    arr := [1,2,3,4,5]
+    res := arr.reduce((x,y) => (x . y))
+    YUnit.assert(res == "12345")
+  }
 }
 All_Tests.push(Reduce_Tests)

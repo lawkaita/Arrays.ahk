@@ -42,6 +42,9 @@ class Slice_Tests {
     YUnit.assert([1,2,3].slice(2,2).equals([2,3]))
     YUnit.assert([1,2,3].slice(2,3).equals([2,3]))
     YUnit.assert([1,2,3].slice(2,4).equals([2,3]))
+
+    YUnit.assert([1,2,3,4,5].slice(2,-1).equals([2,3,4]))
+    YUnit.assert([1,2,3,4,5].slice(2,-2).equals([2,3]))
   }
 }
 All_Tests.push(Slice_Tests)

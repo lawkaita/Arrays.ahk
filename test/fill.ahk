@@ -8,5 +8,9 @@ class Fill_Tests {
   Test_Fill_Count() {
     YUnit.assert([1,2,3,4].fill(0,2,2).equals([1,0,0,4]))
   }
+  Test_Fill_Count_Negative() {
+    YUnit.assert([1,2,3,4].fill(0,2,-1).equals([1,0,0,4]))
+    YUnit.assert([1,2,3,4].fill(0,2,-2).equals([1,0,3,4]))
+  }
 }
 All_Tests.push(Fill_Tests)

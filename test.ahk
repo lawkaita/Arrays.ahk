@@ -13,7 +13,7 @@ debug.ThrowsError := true
 */
 #Include <v2/throwsError/ThrowsError>
 
-Conio.init("wt").SetWinPosTopRight().setQuotePrint('>>', '<<')
+Conio.init("wt").SetWinPosTopRight().setQuotePrint(false)
 
 pid := ProcessExist()
 #HotIf WinGetPid("A") == pid
@@ -21,8 +21,9 @@ Esc::ExitApp
 ^Enter::Reload
 #HotIf
 
-#include "Arrays.ahk"
-Arrays.addMethodsToArrayObjects()
+;#include "Arrays.ahk"
+;Arrays.addMethodsToArrayObjects()
+#include "Arrays_apply.ahk"
 
 All_Tests := []
 
@@ -31,7 +32,8 @@ All_Tests := []
 #include "map.ahk"
 #include "filter.ahk"
 #include "reduce.ahk"
-#include "foreach.ahk"
+#include "reduceRight.ahk"
+#include "forEach.ahk"
 #include "join.ahk"
 #include "every.ahk"
 #include "slice.ahk"
@@ -44,7 +46,11 @@ All_Tests := []
 #include "sort.ahk"
 #include "concat.ahk"
 #include "fromEnumerator.ahk"
-#include "what.ahk"
+#include "flat.ahk"
+#include "flatMap.ahk"
+#include "copyWithin.ahk"
+;#include "find.ahk"
+;#include "findLast.ahk"
 
 Class Arrays_Tests {
   Test_Arrays_Variadic_Call() {
@@ -55,7 +61,7 @@ Class Arrays_Tests {
     }
     fx := fn_ThrowError.bind(1)
 
-    fn := (f) => (Arrays._variadic_call(f, 1, 2, 3, 4))
+    fn := (f) => (Arrays._variadic_call(f, unset, 1, 2, 3, 4))
     fb := fn.bind(fx)
     YUnit.assert(ThrowsError(['TypeError', 'A TypeError'], fb))
 
@@ -106,21 +112,45 @@ Class Arrays_Tests {
     YUnit.assert(ThrowsError(Error, fb))
   }
   Test_Positive_Index_Of() {
-    YUnit.assert(Arrays._positive_index_of([1,1,1], 2, true) == 2)
-    YUnit.assert(Arrays._positive_index_of([1,1,1], 2, false) == 2)
+    YUnit.assert(Arrays._normalize_starting_bound([1,1,1], 2, true) == 2)
+    YUnit.assert(Arrays._normalize_starting_bound([1,1,1], 2, false) == 2)
 
-    YUnit.assert(Arrays._positive_index_of([1,1,1], 4, true) == 0)
-    YUnit.assert(Arrays._positive_index_of([1,1,1], 4, false) == 3)
+    YUnit.assert(Arrays._normalize_starting_bound([1,1,1], 4, true) == 0)
+    YUnit.assert(Arrays._normalize_starting_bound([1,1,1], 4, false) == 3)
 
-    YUnit.assert(Arrays._positive_index_of([1,1,1], -1, true) == 3)
-    YUnit.assert(Arrays._positive_index_of([1,1,1], -1, false) == 3)
+    YUnit.assert(Arrays._normalize_starting_bound([1,1,1], -1, true) == 3)
+    YUnit.assert(Arrays._normalize_starting_bound([1,1,1], -1, false) == 3)
 
-    YUnit.assert(Arrays._positive_index_of([1,1,1], -4, true) == 1)
-    YUnit.assert(Arrays._positive_index_of([1,1,1], -4, false) == 0)
+    YUnit.assert(Arrays._normalize_starting_bound([1,1,1], -4, true) == 1)
+    YUnit.assert(Arrays._normalize_starting_bound([1,1,1], -4, false) == 0)
   }
 }
 All_Tests.push(Arrays_Tests)
 
-conio.println(All_Tests.map( x => x.prototype.__class))
+; include last
+#include "_end.ahk"
+
+
+fn_test_todo() {
+  test_names := All_Tests.map( x => x.prototype.__class )
+  for i, sym in js_array_prototype_symbols {
+    subs := StrSplit(sym, ['.', '()'])
+    method := subs[3] ? subs[3] : subs[2]
+    arr := []
+    test_name := method . "_Tests"
+    if not Arrays.hasMethod(method) {
+      conio.println("Arrays (" i "): " method)
+    }
+    if not arr.hasMethod(method) {
+      conio.println("[] (" i "): " method)
+    }
+    if not test_names.findIndex(x => x = test_name) {
+      conio.println("missing tests: " test_name)
+    }
+  }
+}
+fn_test_todo()
+
+conio.println(All_Tests.map( x => x.prototype.__class . '`n'))
 Yunit.Use(YunitWindow).Test(All_Tests*)
 
