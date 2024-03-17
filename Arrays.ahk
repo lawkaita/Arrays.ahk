@@ -18,8 +18,6 @@
   where this is just a variable name. When an object calls a method
   attached to it, it is placed as the first parameter in the call.
 
-  TODO
-  l.push(x) => if l.has(i) then l.push(x) else l.length = l.length + 1
 */
 class Arrays {
 
@@ -718,7 +716,13 @@ class Arrays {
   }
 
   static shift(l) {
-    return l.RemoveAt(1)
+    if Arrays.throwExceptions
+      return l.RemoveAt(1)
+    else
+      if l.has(1)
+        return l.RemoveAt(1)
+      else
+        return ""
   }
 
   static unshift(l, args*) {
@@ -780,7 +784,7 @@ class Arrays {
     if not isSet(algorithm) {
       fn_topDownMergeSort(l, compareFn) {
         fn_compareFn(l, i, j) {
-          ; unset items are considered greater than any index.
+          ; unset items are considered greater than any set items.
           if l.has(i) {
             if l.has(j)
               return compareFn(l[i],l[j])
@@ -889,13 +893,15 @@ class Arrays {
     } else if ref_indices is Array {
       max_i := max(ref_indices*)
     } else {
-      Throw TypeError(Format("Expected an Integer or an Array but got a{} {}."
-          , ( _n(type(ref_indices)) ? "n" : "" )
-          , type(ref_indices)
-        )
-        , -1
-        , ref_indices
-      )
+      if Arrays.throwExceptions
+	Throw TypeError(Format("Expected an Integer or an Array but got a{} {}."
+	    , ( _n(type(ref_indices)) ? "n" : "" )
+	    , type(ref_indices)
+	  )
+	  , -1
+	  , ref_indices
+	)
+      return ""
     }
     i := 1
     while (i <= max_i) {
@@ -912,17 +918,21 @@ class Arrays {
           ; user passed the obj.__enum method itself
           ; this detatches the __enum method from obj
           ; there is no way to recover obj from here
-          Throw TypeError("Got a detached __Enum method.", -1, e_name)
+          if Arrays.throwExceptions
+            Throw TypeError("Got a detached __Enum method.", -1, e_name)
+          return ""
         }
         ; assume user passed a custom enum function
         ; e := e
       } else {
         ; e is strange, refuse to do anything
-        Throw TypeError(Format("Expected anything enumerable or callable but got a{} {}."
-            , ( _n(type(e)) ? "n" : "" )
-            , type(e)
-          )
-          , -1, e)
+        if Arrays.throwExceptions
+	  Throw TypeError(Format("Expected anything enumerable or callable but got a{} {}."
+	      , ( _n(type(e)) ? "n" : "" )
+	      , type(e)
+	    )
+	    , -1, e)
+        return ""
       }
     }
 
@@ -937,37 +947,8 @@ class Arrays {
     return _l
   }
 
-  static _addMethods() {
-    Array.prototype.equals      := (args*) => (Arrays.equals(args*))
-    Array.prototype.map         := (args*) => (Arrays.map(args*))
-    Array.prototype.filter      := (args*) => (Arrays.filter(args*))
-    Array.prototype.reduce      := (args*) => (Arrays.reduce(args*))
-    Array.prototype.join        := (args*) => (Arrays.join(args*))
-    Array.prototype.forEach     := (args*) => (Arrays.forEach(args*))
-    Array.prototype.slice       := (args*) => (Arrays.slice(args*))
-    Array.prototype.every       := (args*) => (Arrays.every(args*))
-    Array.prototype.some        := (args*) => (Arrays.some(args*))
-    Array.prototype.find        := (args*) => (Arrays.find(args*))
-    Array.prototype.findIndex   := (args*) => (Arrays.findIndex(args*))
-    Array.prototype.includes    := (args*) => (Arrays.includes(args*))
-    Array.prototype.toString    := (args*) => (Arrays.toString(args*))
-    Array.prototype.splice      := (args*) => (Arrays.splice(args*))
-    Array.prototype.toSpliced   := (args*) => (Arrays.toSpliced(args*))
-    Array.prototype.reverse     := (args*) => (Arrays.reverse(args*))
-    Array.prototype.toReversed  := (args*) => (Arrays.toReversed(args*))
-    Array.prototype.prettyPrint := (args*) => (Arrays.prettyPrint(args*))
-    Array.prototype.shift       := (args*) => (Arrays.shift(args*))
-    Array.prototype.unshift     := (args*) => (Arrays.unshift(args*))
-    Array.prototype.concat      := (args*) => (Arrays.concat(args*))
-    Array.prototype.indexOf     := (args*) => (Arrays.indexOf(args*))
-    Array.prototype.lastIndexOf := (args*) => (Arrays.lastIndexOf(args*))
-    Array.prototype.fill        := (args*) => (Arrays.fill(args*))
-    Array.prototype.sort        := (args*) => (Arrays.sort(args*))
-    ; range easyalign /.=/
-  }
-
   static addMethodsToArrayPrototype() {
-    explicit_omit := ['prototype', 'fromEnumerator', 'ofLength', 'AddMethods']
+    explicit_omit := ['prototype', 'fromEnumerator', 'ofLength', 'addMethodsToArrayPrototype']
     for prop in Arrays.OwnProps() {
 
       if (InStr(prop, '_', unset, -StrLen(prop)) == 1) {
