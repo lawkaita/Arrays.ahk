@@ -128,14 +128,11 @@ class Arrays {
     }
   }
 
-  /*
-    Users probably want the values from a map and not the keys
-  */
-  static _concat(l, fn_typecheck, ls*) {
+  static concat(l, ls*) {
     _l := l.clone()
     for _l_ in ls {
-      if (fn_typecheck(_l_)) {
-	for i, x in _l_ {
+      if (_l_ is Array) {
+	for x in _l_ {
 	  _l.push(x)
         }
       } else {
@@ -146,18 +143,7 @@ class Arrays {
     return _l
   }
 
-  static concat(l, ls*) {
-    fn := (_l) => (_l.HasMethod('__Enum'))
-    return Arrays._concat(l, fn, ls*)
-  }
-
-  static concatArray(l, ls*) {
-    fn := (_l) => (_l is Array)
-    return Arrays._concat(l, fn, ls*)
-  }
-
-  ; flat (check concatSpreadable), flatArray, flatAggressive
-  static _flat(l,d,fn_typecheck) {
+  static flat(l, d) {
     _l := l.clone()
     if (d <= 0)
       return _l
@@ -166,18 +152,14 @@ class Arrays {
     end := _l.length
     while (i <= end) {
       x := _l[i]
-      if (fn_typecheck(x)) {
-        _l.removeAt(i)
-        x := Arrays._flat(x, d-1, fn_typecheck)
+      if (x is Array) {
+        _l.removeAt(i)  ;  x
+        x := Arrays.flat(x, d-1)
         _l.insertAt(i, x*)
       }
       i++
     }
     return _l
-  }
-  static flat(l,d) {
-    fn := (_l) => (_l is Array)
-    return Arrays._flat(l,d,fn)
   }
 
   static equals(l1, l2) {

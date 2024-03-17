@@ -34,18 +34,16 @@ class Concat_Tests {
   }
   Test_Map() {
     ; is this what the user would expect?
-    x := ([1,2,3]).concat(Map(1, 'a', 2, 'b', 3, 'c'))
-    YUnit.assert(x.equals([1,2,3,'a','b','c']))
+    m := Map(1, 'a', 2, 'b', 3, 'c')
+    x := ([1,2,3]).concat(m)
+    YUnit.assert(not x.equals([1,2,3,'a','b','c']))
     YUnit.assert(not x.equals([1,2,3,1,2,3]))
+    YUnit.assert(x.equals([1,2,3,m]))
   }
   Test_Object() {
-    x := ([]).concat({a: 'foo', b: 'bar'}.OwnProps())
-    ;conio.println(x)
-    ;YUnit.assert(x.equals(['foo', 'bar']))
-    YUnit.assert(true)
-  }
-  Test_X() {
-    YUnit.assert(true)
+    o := {a: 'foo', b: 'bar'}
+    x := ([1,2,3]).concat(o)
+    YUnit.assert(x.equals([1,2,3,o]))
   }
 }
 All_Tests.push(Concat_Tests)
