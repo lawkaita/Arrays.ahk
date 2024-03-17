@@ -716,13 +716,13 @@ class Arrays {
   }
 
   static shift(l) {
-    if Arrays.throwExceptions
+    if (l.has(1) or Arrays.throwExceptions)
       return l.RemoveAt(1)
-    else
-      if l.has(1)
-        return l.RemoveAt(1)
-      else
-        return ""
+    if l.hasProp('default')
+      return l.default
+    if Arrays.hasProp('default')
+      return Arrays.default
+    return ""
   }
 
   static unshift(l, args*) {
