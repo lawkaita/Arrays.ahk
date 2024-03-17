@@ -1,4 +1,7 @@
 class FromEnumerator_Tests {
+  Begin() {
+    Arrays.throwExceptions := true
+  }
   Test_Integer() {
     _fromEnumerator := Arrays.fromEnumerator.bind(Arrays)
     YUnit.assert(ThrowsError([TypeError
@@ -114,6 +117,9 @@ class FromEnumerator_Tests {
       'Judy Hopps', 'gray',
       'Lola Bunny', 'orange'
     ]))
+  }
+  End() {
+    Arrays.throwExceptions := false
   }
 }
 All_Tests.push(FromEnumerator_Tests)
