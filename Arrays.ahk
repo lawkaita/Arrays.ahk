@@ -72,6 +72,7 @@ class Arrays {
         }
       }
       if (res == failpointer) {
+        ; probably impossible to reach this
         throw Error('Strange function passed to Arrays method.')
       }
       return res
