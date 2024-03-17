@@ -6,7 +6,7 @@
 #Include <v2\YUnit-2\Window>
 #Include <v2\throwsError\ThrowsError>
 
-#include "Arrays_apply.ahk"
+#include "Arrays_array.ahk"
 
 All_Tests := []
 
