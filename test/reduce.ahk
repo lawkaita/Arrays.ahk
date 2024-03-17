@@ -54,5 +54,11 @@ class Reduce_Tests {
     all_truthy := trues.reduce(both)
     YUnit.assert(not all_truthy)
   }
+  Test_Maxmimum() {
+    values := [1,2,3,4,2,0,1,3]
+    res := values.reduce((x,y) => max(x,y))
+    YUnit.assert(res == 4)
+  }
 
 }
+All_Tests.push(Reduce_Tests)

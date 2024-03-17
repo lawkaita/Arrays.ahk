@@ -41,3 +41,4 @@ class Equals_Tests {
     YUnit.assert(not [1,2,3].equals([1,2,3,4]))
   }
 }
+All_Tests.push(Equals_Tests)

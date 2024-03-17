@@ -29,3 +29,4 @@ class Map_Tests {
       .equals(strsplit(expected_str)))
   }
 }
+All_Tests.push(Map_Tests)

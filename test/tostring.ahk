@@ -19,5 +19,5 @@ class ToString_Tests {
     arr.push(1)
     YUnit.assert(arr.toString() == ',1')
   }
-
 }
+All_Tests.push(ToString_Tests)

@@ -6,3 +6,4 @@ class Every_Tests {
     YUnit.assert([1,2,3,4,9,5].every((x) => (x)))
   }
 }
+All_Tests.push(Every_Tests)

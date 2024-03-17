@@ -16,4 +16,22 @@ class ForEach_Tests {
     arr.forEach(fb)
     YUnit.assert(calls == 1)
   }
+  Test_ForEach_ThreeTuple_Array() {
+    calls := 0
+    fn := (&x) => (x++)
+    fb := fn.bind(&calls)
+    arr := ['a', 'b', 'c']
+    arr.forEach(fb)
+    YUnit.assert(calls == 3)
+  }
+  Test_ThrowsError() {
+    arr := [1,2,3]
+    fn_ThrowError(x) {
+      Throw Error('An Error')
+    }
+    fn := (arr, f) => (arr.forEach(f)) 
+    fb := fn.bind(arr, fn_ThrowError)
+    YUnit.assert(ThrowsError(['Error', 'An Error'], fb))
+  }
 }
+All_Tests.push(ForEach_Tests)

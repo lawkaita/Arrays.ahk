@@ -37,3 +37,4 @@ class Filter_Tests {
     YUnit.assert(f.filter(is_local_maximum).equals([6,3,3,7]))
   }
 }
+All_Tests.push(Filter_Tests)

@@ -171,5 +171,5 @@ class Slice_Node_Tests {
       )
     }
   }
-
 }
+All_Tests.Push(Slice_Node_Tests)

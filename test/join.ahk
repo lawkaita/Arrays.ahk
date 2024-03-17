@@ -6,3 +6,4 @@ class Join_Tests {
     YUnit.assert([].join(',') == '')
   }
 }
+All_Tests.push(Join_Tests)
