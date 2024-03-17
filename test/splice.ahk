@@ -18,5 +18,11 @@ class Splice_Tests {
     YUnit.assert(arr.equals([1,2,'a','b',4]))
     YUnit.assert(res.equals([3]))
   }
+  Test_Sparse_Array() {
+    arr := [1, ,3, ,5]
+    res := arr.splice(2,2,'a', ,'b')
+    YUnit.assert(res.equals([unset, 3]))
+    YUnit.assert(arr.equals([1, 'a', unset, 'b', unset, 5]))
+  }
 }
 All_Tests.push(Splice_Tests)

@@ -51,6 +51,11 @@ All_Tests := []
 #include "copyWithin.ahk"
 ;#include "find.ahk"
 ;#include "findLast.ahk"
+#include "findIndex.ahk"
+#include "includes.ahk"
+#include "reverse.ahk"
+#include "unshift.ahk"
+#include "entries.ahk"
 
 Class Arrays_Tests {
   Test_Arrays_Variadic_Call() {
@@ -77,9 +82,13 @@ Class Arrays_Tests {
       B) fn_ThrowError.maxParams == 1
       C) _variadic_call(fn_ThrowError) with no args causes 'l' to be of length 0,
       but _variadic_call tries to call fn(l[1]) since (B)
+
+      Update: now _variadic_call increases l.length to 1, with l[1] as unset,
+      calling fn(l*) which evaluates to fn(unset)
     */
-    YUnit.assert(ThrowsError(Error, a_vc, fn_ThrowError))
-    YUnit.assert(ThrowsError([IndexError, "Invalid index.", "Array.Prototype.__Item.Get", "1"], a_vc, fn_ThrowError))
+
+    YUnit.assert(not ThrowsError([IndexError, "Invalid index.", "Array.Prototype.__Item.Get", "1"], a_vc, fn_ThrowError))
+    YUnit.assert(ThrowsError(Error("Missing a required parameter.", "", "x"), a_vc, fn_ThrowError))
 
     YUnit.assert(ThrowsError(Error, a_vc, fx))
     YUnit.assert(ThrowsError([TypeError, 'A TypeError'], a_vc, fx))
@@ -151,6 +160,5 @@ fn_test_todo() {
 }
 fn_test_todo()
 
-conio.println(All_Tests.map( x => x.prototype.__class . '`n'))
 Yunit.Use(YunitWindow).Test(All_Tests*)
 

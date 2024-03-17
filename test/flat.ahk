@@ -85,5 +85,20 @@ class Flat_Tests {
     Yunit.assert(result.equals(expected))
     YUnit.assert(result_head.equals([100]))
   }
+  Test_Sparse_Array() {
+    arr := [1,unset,3,unset,5,unset]
+    res := arr.flat(0)
+    YUnit.assert(res.equals([1,3,5]))
+    res := arr.flat()
+    YUnit.assert(res.equals([1,3,5]))
+
+    dont_flatten_me := [7,8,unset]
+    arr := [1,unset,3,[unset,4],5,[6,dont_flatten_me,unset,10]]
+    res := arr.flat()
+    YUnit.assert(res.equals([1,3,4,5,6,dont_flatten_me,10]))
+    res := arr.flat(2)
+    YUnit.assert(res.equals([1,3,4,5,6,7,8,10]))
+
+  }
 }
 All_Tests.push(Flat_Tests)

@@ -40,5 +40,14 @@ class Equals_Tests {
   Test_Different_Length() {
     YUnit.assert(not [1,2,3].equals([1,2,3,4]))
   }
+  Test_Sparse_Arrays() {
+    a := [1, unset, 3, unset, 5]
+    b := [1, unset, 3, unset, 5]
+    c := [unset, 2, 3, unset, 5]
+    d := [1, 2, 3, 4, 5]
+    Yunit.assert(a.equals(b))
+    Yunit.assert(not a.equals(c))
+    Yunit.assert(not a.equals(d))
+  }
 }
 All_Tests.push(Equals_Tests)

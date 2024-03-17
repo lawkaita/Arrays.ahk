@@ -45,5 +45,10 @@ class Concat_Tests {
     x := ([1,2,3]).concat(o)
     YUnit.assert(x.equals([1,2,3,o]))
   }
+  Test_Sparse_Arrays() {
+    x := [1,2, ,4]
+    y := x.concat(([ [5,6], ,[8,unset], 10 ])*)
+    YUnit.assert(y.equals([1,2, ,4,5,6, ,8, ,10]))
+  }
 }
 All_Tests.push(Concat_Tests)

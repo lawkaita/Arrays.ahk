@@ -42,5 +42,13 @@ class ForEach_Tests {
     YUnit.assert(obj.c == 3)
     YUnit.assert(obj.d == 4)
   }
+  Test_Sparse_Array() {
+    calls := 0
+    fn := (&x) => (x++)
+    fb := fn.bind(&calls)
+    arr := ['a', unset,'b', unset,'c']
+    arr.forEach(fb)
+    YUnit.assert(calls == 3)
+  }
 }
 All_Tests.push(ForEach_Tests)

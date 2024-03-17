@@ -14,6 +14,10 @@ class FlatMap_Tests {
     res := arr.flatMap((x => [x, 2 ** x]))
     YUnit.assert(res.equals([0,1,1,2,2,4,3,8,4,16]))
   }
-
+  Test_Sparse_Array() {
+    arr := [1, 2, unset, 4]
+    res := arr.flatMap((x => [x, x * 2]))
+    Yunit.assert(res.equals([1,2,2,4,4,8]))
+  }
 }
 All_Tests.push(FlatMap_Tests)

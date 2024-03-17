@@ -36,5 +36,10 @@ class Filter_Tests {
     f := [1,3,6,-1,3,3,3,4,5,7]
     YUnit.assert(f.filter(is_local_maximum).equals([6,3,3,7]))
   }
+  Test_Sparse_Array() {
+    arr := [1, ,3, ,5]
+    res := arr.filter(x => x)
+    YUnit.assert(res.equals([1,3,5]))
+  }
 }
 All_Tests.push(Filter_Tests)

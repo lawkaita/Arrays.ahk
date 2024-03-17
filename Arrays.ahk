@@ -24,6 +24,7 @@
 class Arrays {
 
   static throwExceptions := false
+  static stringRepresentationOfUnset := 'unset'
 
   /*
     This function is only called by Arrays methods.
@@ -48,7 +49,8 @@ class Arrays {
       l.insertAt(1, thisArg)
     }
 
-    if (type(fn) == 'BoundFunc') {
+    if fn.IsVariadic {
+    ;if (type(fn) == 'BoundFunc') {
       /*
         UUGLY HACK
       */
@@ -77,14 +79,8 @@ class Arrays {
       return res
     }
 
-    switch fn.maxparams {
-      case 0: return fn()
-      case 1: return fn(l[1])
-      case 2: return fn(l[1], l[2])
-      case 3: return fn(l[1], l[2], l[3])
-      case 4: return fn(l[1], l[2], l[3], l[4])
-      case 5: return fn(l[1], l[2], l[3], l[4], l[5])
-    }
+    l.length := fn.maxParams
+    return fn(l*)
   }
 
   static _error_is_from_passing_too_many_parameters_here(e) {
@@ -173,12 +169,16 @@ class Arrays {
   static concat(l, ls*) {
     _l := l.clone()
     for _l_ in ls {
-      if (_l_ is Array) {
-	for x in _l_ {
-	  _l.push(x)
+      if isSet(_l_) {
+	if (_l_ is Array) {
+	  for x in _l_ {
+	    IsSet(x) ? _l.push(x) : _l.length := _l.length + 1
+	  }
+	} else {
+          _l.push(_l_)
         }
       } else {
-        _l.push(_l_)
+        _l.length := _l.length + 1
       }
     }
 
@@ -187,18 +187,19 @@ class Arrays {
 
   static flat(l, d := 1) {
     _l := l.clone()
-    if (d <= 0)
-      return _l
-
     i := 1
-    b := _l.length
-    while (i <= b) {
+    while (i <= _l.length) {
+      if not _l.has(i) {
+        _l.removeAt(i)
+        continue
+      }
+
       x := _l[i]
-      if (x is Array) {
-        _l.removeAt(i)  ;  x
-        x := Arrays.flat(x, d-1)
-        _l.insertAt(i, x*)
-        i := i + x.length
+      if ((x is Array) and (d > 0)) {
+	_l.removeAt(i)  ;  x
+	x := Arrays.flat(x, d-1)
+	_l.insertAt(i, x*)
+	i := i + x.length - 1
       }
       i++
     }
@@ -208,6 +209,8 @@ class Arrays {
   static flatMap(l, fn, thisArg?) {
     _l := []
     for i, x in l {
+      if not IsSet(x)
+        continue
       y := Arrays._variadic_call(fn, thisArg ?? unset, x, i, l)
       if (y is Array)
         _l.push(y*)
@@ -231,29 +234,35 @@ class Arrays {
 
     count := Arrays._normalize_count(l, a, count)
     if (target < a) {
-
       i := 0
-      while (i < count)
-        l[target+i] := l[a+i], i++
-
+      step := 1
+      range_test := (_i) => (_i < count)
     } else {  ;  target > a
       if (target - 1 + count > l.length)
         count := Arrays._normalize_count(l, target, count)
-
       i := count - 1
-      while (i >= 0)
-        l[target+i] := l[a+i], i--
+      step := -1
+      range_test := (_i) => (_i >= 0)
+    }
+
+    while (range_test(i)) {
+      if (l.has(a+i)) {
+	l[target+i] := l[a+i]
+      } else {
+	l.delete(target+i)
+      }
+      i += step
     }
 
     return l
   }
 
   static equals(l1, l2) {
-    if (l1 == l2) {
-      return true
-    }
     if not (l2 is Array) {
       return false
+    }
+    if (l1 == l2) {
+      return true
     }
     if not (type(l1) == type(l2)) {
       return false
@@ -263,6 +272,18 @@ class Arrays {
     }
 
     for i, x in l1 {
+      if not isSet(x) {
+        if l2.has(i) {
+          return false
+        }
+        ;  l1[i] and l2[i] are unset
+        continue
+      }
+
+      if not l2.has(i) {
+        return false
+      }
+
       if not (x == l2[i]) {
         return false
       }
@@ -273,21 +294,30 @@ class Arrays {
   static map(l, fn, thisArg?) {
     _l := []
     for i, x in l {
-      _l.push(Arrays._variadic_call(fn, thisArg ?? unset, x, i, l))
+      if IsSet(x) {
+        _l.push(Arrays._variadic_call(fn, thisArg ?? unset, x, i, l))
+      } else {
+        _l.length := _l.length + 1
+      }
     }
     return _l
   }
 
   static forEach(l, fn, thisArg?) {
     for i, x in l {
-      Arrays._variadic_call(fn, thisArg ?? unset, x, i, l)
+      if IsSet(x) {
+        Arrays._variadic_call(fn, thisArg ?? unset, x, i, l)
+      }
     }
+    return ""
   }
 
   static every(l, fn, thisArg?) {
     for i, x in l {
-      if not Arrays._variadic_call(fn, thisArg ?? unset, x, i, l) {
-        return false
+      if IsSet(x) {
+	if not Arrays._variadic_call(fn, thisArg ?? unset, x, i, l) {
+	  return false
+	}
       }
     }
     return true
@@ -295,8 +325,10 @@ class Arrays {
 
   static some(l, fn, thisArg?) {
     for i, x in l {
-      if Arrays._variadic_call(fn, thisArg ?? unset, x, i, l) {
-        return true
+      if IsSet(x) {
+	if Arrays._variadic_call(fn, thisArg ?? unset, x, i, l) {
+	  return true
+	}
       }
     }
     return false
@@ -304,25 +336,45 @@ class Arrays {
 
   static _mk_array_enumerator(l, ascending, arg_count) {
     if (ascending) {
-      return l.__Enum(arg_count)
+      if (arg_count > 0) {
+        return l.__Enum(arg_count)
+      }
+
+      _i := 1
+      fn_ascendingIndexEnumerator(&i) {
+        if (_i > l.length)
+          return false
+        i := _i
+        _i++
+        return true
+      }
+      return fn_ascendingIndexEnumerator
     }
 
-    a := l.length
+    _i := l.length
 
     fn_elementEnumerator(&x) {
-      if (a <= 0)
+      if (_i <= 0)
         return false
-      x := l[a]
-      a--
+      x := l[_i]
+      _i--
+      return true
+    }
+
+    fn_indexEnumerator(&i) {
+      if (_i <= 0)
+        return false
+      i := _i
+      _i--
       return true
     }
 
     fn_indexElementEnumerator(&i, &x) {
-      if (a <= 0)
+      if (_i <= 0)
         return false
-      i := a
-      x := l[a]
-      a--
+      i := _i
+      x := l[_i]
+      _i--
       return true
     }
 
@@ -330,17 +382,39 @@ class Arrays {
       return fn_elementEnumerator
     } else if (arg_count == 2) {
       return fn_indexElementEnumerator
+    } else if (arg_count == 0) {
+      return fn_indexEnumerator
     }
 
     return ""
+  }
+
+  static keys(l) {
+    return Arrays._mk_array_enumerator(l, true, 0)
+  }
+
+  static values(l) {
+    return Arrays._mk_array_enumerator(l, true, 1)
+  }
+
+  static entries(l) {
+    i := 1
+    fn_entriesEnumerator(&e) {
+      if (i > l.length)
+        return false
+      e := [i, l.has(i) ? l[i] : unset]
+      i++
+      return true
+    }
+    return fn_entriesEnumerator
   }
 
   static _find(l, fn, ascending, default_?, thisArg?) {
     fn_enum := Arrays._mk_array_enumerator(l, ascending, 2)
 
     for i, x in fn_enum {
-      if Arrays._variadic_call(fn, thisArg ?? unset, x, i, l) {
-        return x
+      if Arrays._variadic_call(fn, thisArg ?? unset, x ?? unset, i, l) {
+        return x ?? ""
       }
     }
 
@@ -372,7 +446,7 @@ class Arrays {
   */
   static findIndex(l, fn, thisArg?) {
     for i, x in l {
-      if Arrays._variadic_call(fn, thisArg ?? unset, x, i, l) {
+      if Arrays._variadic_call(fn, thisArg ?? unset, x ?? unset, i, l) {
         return i
       }
     }
@@ -385,22 +459,31 @@ class Arrays {
   static findLastIndex(l, fn, thisArg?) {
     fn_enum := Arrays._mk_array_enumerator(l, false, 2)
     for i, x in fn_enum {
-      if Arrays._variadic_call(fn, thisArg ?? unset, x, i, l) {
+      if Arrays._variadic_call(fn, thisArg ?? unset, x ?? unset, i, l) {
         return i
       }
     }
     return 0
   }
 
-  static includes(l, x, a:=1) {
+  static includes(l, x?, a:=1) {
     a := Arrays._normalize_starting_bound(l,a,true)
     if (not a)
       return false
 
-    while (a <= l.length) {
-      if (x == l[a])
-        return true
-      a++
+    if (IsSet(x)) {
+      while (a <= l.length) {
+	if (l.has(a))
+	  if (x == l[a])
+	    return true
+	a++
+      }
+    } else {
+      while (a <= l.length) {
+	if (not l.has(a))
+          return true
+	a++
+      }
     }
     
     return false
@@ -409,18 +492,17 @@ class Arrays {
   static filter(l, fn, thisArg?) {
     _l := []
     for i, x in l {
-      if (Arrays._variadic_call(fn, thisArg ?? unset, x, i, l)) {
-        _l.push(x)
+      if IsSet(x) {
+	if (Arrays._variadic_call(fn, thisArg ?? unset, x, i, l)) {
+	  _l.push(x)
+	}
       }
     }
     return _l
   }
 
   static _reduce(l, fn, left, initial?) {
-    if (l.length == 0) {
-      if isSet(initial)
-	return initial
-
+    fn_handleEmpty(l) {
       if l.hasProp('default')
 	return l.default
 
@@ -428,9 +510,16 @@ class Arrays {
 	return Arrays.default
 
       if Arrays.throwExceptions
-	Throw TypeError("Empty array reduced to nothing.", -2)
+	Throw TypeError("Empty array reduced to nothing.", -3)
 
       return ""
+    }
+
+    if (l.length == 0) {
+      if isSet(initial)
+	return initial
+
+      return fn_handleEmpty(l)
     }
 
     if (left) {
@@ -438,25 +527,37 @@ class Arrays {
 	x := initial
 	i := 1
       } else {
-	x := l[1]
-	i := 2
+        i_x := Arrays.findIndex(l, (x?) => (IsSet(x)))
+        if not (i_x)
+          return fn_handleEmpty(l)
+
+	x := l[i_x]
+	i := i_x + 1
       }
 
       while (i <= l.length) {
-	x := Arrays._variadic_call(fn, unset, x, l[i], i, l)
+        if (l.has(i)) {
+	  x := Arrays._variadic_call(fn, unset, x, l[i], i, l)
+        }
 	i++
       }
     } else {  ;  reduceRight
       if isSet(initial) {
 	x := initial
-	i := l.length
+        i := l.length
       } else {
-	x := l[-1]
-	i := l.length - 1
+        i_x := Arrays.findLastIndex(l, (x?) => (IsSet(x)))
+        if not (i_x)
+          return fn_handleEmpty(l)
+
+	x := l[i_x]
+	i := i_x - 1
       }
 
       while (i > 0) {
-	x := Arrays._variadic_call(fn, unset, x, l[i], i, l)
+        if (l.has(i)) {
+	  x := Arrays._variadic_call(fn, unset, x, l[i], i, l)
+        }
 	i--
       }
     }
@@ -474,7 +575,7 @@ class Arrays {
   static join(l, sep:=',') {
     str := ""
     for i, x in l {
-      str .= x . (i < l.length ? sep : '')
+      str .= Arrays._item_to_string(l, x ?? unset) . (i < l.length ? sep : '')
     }
     return str
   }
@@ -498,8 +599,14 @@ class Arrays {
       return _l
 
     b := a - 1 + count
-    while (a <= b)
-      _l.push(l[a]), a++
+    while (a <= b) {
+      if l.has(a)
+        _l.push(l[a])
+      else 
+        _l.length := _l.length + 1
+
+      a++
+    }
 
     return _l
   }
@@ -563,10 +670,21 @@ class Arrays {
     mid := l.length // 2
     i := 1
     while (i <= mid) {
-      tmp := l[i]
       j := l.length + 1 - i
-      l[i] := l[j]
-      l[j] := tmp
+      if l.has(i) {
+	tmp := l[i]
+        if l.has(j)
+	  l[i] := l[j]
+        else
+          l.delete(i)
+        l[j] := tmp
+      } else {
+        if l.has(j) {
+	  l[i] := l[j]
+          l.delete(j)
+        }
+        ; else do nothing: l[i] and l[j] are unset
+      }
       i++
     }
     return l
@@ -577,19 +695,26 @@ class Arrays {
     return Arrays.reverse(_l)
   }
 
+  static _item_to_string(l, x?) {
+    if not isSet(x)
+      return Arrays.stringRepresentationOfUnset
+    if (x == l)
+      return ''
+    if x is Number
+      return x
+    if x is String
+      return x
+    if x.hasMethod('toString')
+      return String(x)
+    return type(x)
+  }
+
   static toString(l) {
-    fn_toString(x,i,l) {
-      if (x == l)
-        return ''
-      if x is Number
-        return x
-      if x is String
-        return x
-      if x.hasMethod('toString')
-        return String(x)
-      return type(x)
+    _l := []
+    for x in l {
+      _l.push(Arrays._item_to_string(l, x ?? unset))
     }
-    return Arrays.join(Arrays.map(l,fn_toString))
+    return Arrays.join(_l)
   }
 
   static shift(l) {
@@ -601,24 +726,32 @@ class Arrays {
     return l.length
   }
 
-  static _indexOf(l, x, a, ascending) {
+  static _indexOf(l, x?, a:=1, ascending:=true) {
     if (ascending) {
-      a_is_lower_endpoint := true
       step := 1
       range_test := (i) => (i <= l.length)
     } else {
-      a_is_lower_endpoint := false
       step := -1
       range_test := (i) => (i > 0)
     }
 
-    a := Arrays._normalize_starting_bound(l, a, a_is_lower_endpoint)
+    a := Arrays._normalize_starting_bound(l, a, ascending)
     if (not a)
       return 0
 
+    if IsSet(x) {
+      while (range_test(a)) {
+	if l.has(a)
+	  if (x == l[a])
+	    return a
+	a := a + step
+      }
+      return 0
+    }
+
     while (range_test(a)) {
-      if (x == l[a])
-        return a
+      if not l.has(a)
+	return a
       a := a + step
     }
 
@@ -628,15 +761,15 @@ class Arrays {
   /*
     returns 0 instead of -1 if nothing is found.
   */
-  static indexOf(l,x,a:=1) {
-    return Arrays._indexOf(l,x,a,true)
+  static indexOf(l,x?,a:=1) {
+    return Arrays._indexOf(l, x ?? unset, a, true)
   }
 
   /*
     returns 0 instead of -1 if nothing is found.
   */
-  static lastIndexOf(l,x,a:=l.length) {
-    return Arrays._indexOf(l,x,a,false)
+  static lastIndexOf(l,x?,a:=l.length) {
+    return Arrays._indexOf(l, x ?? unset, a, false)
   }
 
   static prettyPrint(l) {
@@ -646,6 +779,18 @@ class Arrays {
   static sort(l, compareFn?, algorithm?) {
     if not isSet(algorithm) {
       fn_topDownMergeSort(l, compareFn) {
+        fn_compareFn(l, i, j) {
+          ; unset items are considered greater than any index.
+          if l.has(i) {
+            if l.has(j)
+              return compareFn(l[i],l[j])
+            return -1
+          }
+
+          if l.has(j)
+            return 1
+          return 0
+        }
 	fn_topDownSplitMerge(l1, a, b, l2) {
 	  if (b <= a)
 	    return
@@ -657,16 +802,24 @@ class Arrays {
 	  fn_topDownMerge(l2, a, mid, b, l1)
 	}
 	fn_topDownMerge(l1, a, mid, b, l2) {
-	  i := a
-	  j := mid + 1
+	  i := a        ;  index from a       to mid
+	  j := mid + 1  ;  index from mid + 1 to b
 
 	  k := a
 	  while (k <= b) {
-	    if (i <= mid) and ((j > b) or ( compareFn(l1[i], l1[j]) <= 0 )) {
-	      l2[k] := l1[i]
+	    if (i <= mid) and ((j > b) or (fn_compareFn(l1, i, j) <= 0)) {
+              ; i is not exhausted and: either j is exhausted, or l1[i] is smaller (or equal) compared to l1[j].
+              if (l1.has(i))
+	        l2[k] := l1[i]
+              else
+                l2.delete(k)
 	      i++
 	    } else {
-	      l2[k] := l1[j]
+              ; i is exhausted, or l1[j] < l1[i]
+              if (l1.has(j))
+	        l2[k] := l1[j]
+              else
+                l2.delete(k)
 	      j++
 	    }
 	    k++
@@ -774,11 +927,8 @@ class Arrays {
     }
 
     _l := []
-    while (true) {
+    while (e(refs*)) {
       _l_ := []
-      items_remaining := e(refs*)
-      if not items_remaining
-        break
 
       for i in ref_indices
         _l_.push(enum_arg_%i%)
@@ -851,8 +1001,8 @@ class Arrays {
         continue
       }
 
-      f  := desc.call
-      fb := f.bind(Arrays)
+      f  := desc.call      ;   f ~ f(this, l, ...)
+      fb := f.bind(Arrays) ;  fb ~ f(Arrays, l, ...)
       desc.call := fb
       
       Array.prototype.defineProp(prop, desc)

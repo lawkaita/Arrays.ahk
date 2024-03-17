@@ -46,5 +46,9 @@ class Slice_Tests {
     YUnit.assert([1,2,3,4,5].slice(2,-1).equals([2,3,4]))
     YUnit.assert([1,2,3,4,5].slice(2,-2).equals([2,3]))
   }
+  Test_Sparse_Array() {
+    YUnit.assert([1, ,3, ,5].slice(2,3).equals([unset,3,unset]))
+    YUnit.assert([1, ,3, ,5].slice(2).equals([unset,3,unset,5]))
+  }
 }
 All_Tests.push(Slice_Tests)

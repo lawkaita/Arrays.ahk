@@ -15,9 +15,15 @@ class ToString_Tests {
   Test_Self() {
     arr := []
     arr.push(arr)
+    ; arr is now [arr]
     YUnit.assert(arr.toString() == '')
     arr.push(1)
+    ; arr is now [arr, 1]
     YUnit.assert(arr.toString() == ',1')
+  }
+  Test_Unset() {
+    arr := [1, ,3]
+    YUnit.assert(arr.toString() == Format('1,{},3', Arrays.stringRepresentationOfUnset))
   }
 }
 All_Tests.push(ToString_Tests)

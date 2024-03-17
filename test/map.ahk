@@ -28,5 +28,9 @@ class Map_Tests {
     YUnit.assert(these_and_their_previous_are_ones
       .equals(strsplit(expected_str)))
   }
+  Test_Sparse_Array() {
+     result := [1, unset, 3, unset, 5].map((x) => (x * 2))
+     YUnit.assert(result.equals([2, unset, 6, unset, 10]))
+  }
 }
 All_Tests.push(Map_Tests)

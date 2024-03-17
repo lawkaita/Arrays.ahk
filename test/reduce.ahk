@@ -53,6 +53,7 @@ class Reduce_Tests {
     trues := [ 1, 2, true, 'abc', {}, [], Error ]
     all_truthy := trues.reduce(both)
     YUnit.assert(all_truthy)
+
     trues.push('')
     all_truthy := trues.reduce(both)
     YUnit.assert(not all_truthy)
@@ -66,6 +67,29 @@ class Reduce_Tests {
     arr := [1,2,3,4,5]
     res := arr.reduce((x,y) => (x . y))
     YUnit.assert(res == "12345")
+  }
+  Test_Sparse_Array() {
+    fn_acc := this.fn_acc
+    calls := 0
+    fb := fn_acc.bind(&calls)
+
+    arr := [1, ,3, ,5]
+    res := arr.reduce(fb)
+    YUnit.assert(res == 9)
+    YUnit.assert(calls == 2)
+
+    calls := 0
+    fb := fn_acc.bind(&calls)
+    res := [unset, unset, unset].reduce(fb, 1)
+    YUnit.assert(res == 1)
+    YUnit.assert(calls == 0)
+
+    ; in js this throws TypeError
+    calls := 0
+    fb := fn_acc.bind(&calls)
+    res := [unset, unset, unset].reduce(fb)
+    YUnit.assert(res == "")
+    YUnit.assert(calls == 0)
   }
 }
 All_Tests.push(Reduce_Tests)

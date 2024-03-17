@@ -26,7 +26,7 @@ class Sort_Tests {
     YUnit.assert([4,2,3,1,11].sort(unset, fn_gnomeSort).equals([1,11,2,3,4]))
     fn_compareNumeric := (x, y) => (x < y ? -1 : x == y ? 0 : 1)
     YUnit.assert([4,2,3,1,11].sort(fn_compareNumeric, fn_gnomeSort).equals([1,2,3,4,11]))
-  } 
+  }
   Test_Broken_Custom_Algorithm() {
     fn_dontSort(l, compareFn) {
       return
@@ -43,6 +43,9 @@ class Sort_Tests {
     ]
     objects_sorted := [objects[4],objects[2],objects[3],objects[1]]
     YUnit.assert(objects.sort(compareFn).equals(objects_sorted))
+  }
+  Test_Sparse_Array() {
+    YUnit.assert(['a', unset, 'c', unset, 'b'].sort().equals(['a','b','c', unset, unset]))
   }
 }
 All_Tests.push(Sort_Tests)

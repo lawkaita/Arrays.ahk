@@ -70,7 +70,6 @@ class CopyWithin_Tests {
   Test_Copy_Forwards_Negative_Count() {
     a := [1,2,3,4,5]
     a.copyWithin(3,2,-1)
-    conio.println(a)
     YUnit.assert(a.equals([1,2,2,3,4]))
 
     a := [1,2,3,4,5]
@@ -88,6 +87,11 @@ class CopyWithin_Tests {
     a := [1,2,3,4,5]
     a.copyWithin(3,2,-5)
     YUnit.assert(a.equals([1,2,3,4,5]))
+  }
+  Test_Sparse_Array() {
+    a := [1,2,3, ,5]
+    a.copyWithin(2,3,2)
+    YUnit.assert(a.equals([1,3, , ,5]))
   }
 }
 All_Tests.push(CopyWithin_Tests)
